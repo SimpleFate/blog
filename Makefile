@@ -1,21 +1,18 @@
 TARGET=blog
-
-OS=linux
-#OS=windows
-#OS=darwin
+PROJECT=blog
 
 ARCH=amd64
 
-build:
-	CGO_ENABLED=0 GOOS=${OS} GOARCH=amd64 go build -o bin/${OS}/${TARGET} "."
+buildLocal:
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o ${TARGET} "."
 
-upload:
-	scp bin/${OS}/${TARGET} corey@myserver:/home/corey/blog
+buildLinux:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ${TARGET} "."
 
-run:
-	ssh corey@myserver "cd ~/blog; ./blog"
+uploadAll:
+	scp -r ../${PROJECT} corey@myserver:/home/corey/project/
 
 clean:
-	rm -rf bin
+	rm -rf ${TARGET}
 
-.PHONY: clean build
+.PHONY: clean buildLocal buildLinux uploadAll
