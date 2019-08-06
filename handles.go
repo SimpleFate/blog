@@ -1,39 +1,77 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"net/http"
-	"strings"
 )
 
 var (
-	hStaticFile = http.StripPrefix("/static/", http.FileServer(http.Dir("static"))).ServeHTTP
-	hTest       = sayhelloName
-	rIndex      = index
+	viewFilePrefix = "view/"
 )
 
-func sayhelloName(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()       // 解析参数，默认是不会解析的
-	fmt.Println(r.Form) // 这些信息是输出到服务器端的打印信息
-	fmt.Println("path", r.URL.Path)
-	fmt.Println("scheme", r.URL.Scheme)
-	fmt.Println(r.Form["url_long"])
-	for k, v := range r.Form {
-		fmt.Println("key:", k)
-		fmt.Println("val:", strings.Join(v, ""))
-	}
-	fmt.Fprintf(w, "Hello astaxie!") // 这个写入到 w 的是输出到客户端的
+var (
+	handleStatics = http.StripPrefix("/static/", http.FileServer(http.Dir("static"))).ServeHTTP
+	handleTest    = test
+
+	pageIndex = getForwardHandle("learn02.html")
+)
+
+func test(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	//parm := struct {
+	//	Key string `json:"key"`
+	//}{}
+
+	value := r.Form.Get("username")
+	//getJsonFromBody(r, &parm)
+
+	//关闭xss保护，可以执行脚本
+	//w.Header().Set("X-XSS-Protection", "0")
+
+	fmt.Fprintln(w, value)
 }
 
-func index(w http.ResponseWriter, r *http.Request) {
-	res, err := template.ParseFiles("view/learn02.html")
+//获取body中的json
+//result 自定义结构体
+func getJsonFromBody(r *http.Request, result interface{}) {
+	body := r.Body
+	defer body.Close()
+
+	buffer := make([]byte, 1024)
+	buffers := make([]byte, 0, 1024)
+	n, _ := body.Read(buffer)
+	for n > 0 {
+		//str := (*string)(unsafe.Pointer(&buffer))
+		buffers = append(buffers, buffer[:n]...)
+		n, _ = body.Read(buffer)
+	}
+	err := json.Unmarshal(buffers, result)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	err = res.Execute(w, nil)
-	if err != nil {
-		fmt.Println(err)
+}
+
+//跳转
+func forward(w http.ResponseWriter, r *http.Request, f string) {
+	hanle := getForwardHandle(f)
+	hanle(w, r)
+}
+
+//获取页面跳转HandleFunc
+func getForwardHandle(templateFileName string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		templatePath := fmt.Sprintf("%s%s", viewFilePrefix, templateFileName)
+		res, err := template.ParseFiles(templatePath)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		err = res.Execute(w, nil)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }

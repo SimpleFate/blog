@@ -1,10 +1,19 @@
 package main
 
-type Router struct {
-	routerMap map[string]interface{}
-}
+import "net/http"
 
-func (router *Router) Init() {
-	router.routerMap["/static/"] = hStaticFile
-	//router.routerMap["/"] =
+var (
+	routerMap = make(map[string]http.HandlerFunc)
+)
+
+func init() {
+	routerMap["/"] = pageIndex
+	routerMap["/static/"] = handleStatics
+	routerMap["/test"] = handleTest
+	bind()
+}
+func bind() {
+	for k, v := range routerMap {
+		http.HandleFunc(k, v)
+	}
 }
