@@ -1,0 +1,42 @@
+1.发送留言
+2.查看留言
+3.发表评论
+4.顶
+5.踩
+6.获取地点，时间，ip
+7.暂时只支持文字
+
+数据库：
+
+集合名：comment
+
+[必需]
+_id ObjectId
+name   string  用户名
+ip  string 
+location string
+ts    int64  11位时间戳，时间
+support int 点赞
+oppose  int 踩
+content string 限制1024字节以内
+istop   bool 是否是顶层留言
+
+[选择]
+replys list[ObjectId] 所有回复， 只有 顶层留言 有这个属性
+topid ObjectId  顶层留言的comment id, 只有 留言的回复 有这个属性
+refer ObjectId  回复的comment id， 只有 留言的回复 有这个属性
+
+
+
+接口：
+
+支持分页
+1. 查看所有留言 
+缩略，展开， 显示顶、踩、评论数， 显示ip 位置 时间
+2. 留言
+获取地点，时间，ip
+3. 回复留言
+4.点赞  赞留言和评论
+5.踩   踩留言和评论
+
+1. 查看所有留言 get
