@@ -11,12 +11,8 @@ var (
 	Mongo = &mongo{}
 )
 
-func Init() {
+func init() {
 	Mongo.init()
-}
-func Destroy() {
-	fmt.Println("destroying mongo")
-	Mongo.session.Close()
 }
 
 type mongo struct {
@@ -25,7 +21,6 @@ type mongo struct {
 }
 
 func (m *mongo) init() {
-	fmt.Println("initiating mongo")
 	session, err := mgo.Dial(dbconst.Uri)
 	if err != nil {
 		//TODO log
@@ -34,6 +29,8 @@ func (m *mongo) init() {
 	}
 	m.session = session
 	m.database = session.DB(dbconst.Database)
+	fmt.Println("initiating mongo")
+
 }
 
 func (m *mongo) C(collection string) *mgo.Collection {

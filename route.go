@@ -9,7 +9,8 @@ var (
 func init() {
 	routerMap["/"] = pageIndex
 	routerMap["/static/"] = handleStatics
-	routerMap["/test"] = handleTest
+
+	routerMap["/api/comment/add"] = handleAddComment
 	bind()
 }
 func bind() {

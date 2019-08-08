@@ -1,9 +1,11 @@
 package main
 
 import (
+	"blog/services"
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -13,24 +15,57 @@ var (
 
 var (
 	handleStatics = http.StripPrefix("/static/", http.FileServer(http.Dir("static"))).ServeHTTP
-	handleTest    = test
-
-	pageIndex = getForwardHandle("learn02.html")
+	pageIndex     = getForwardHandle("learn02.html")
 )
+var (
+	handleAddComment = apiAddComment
+)
+
+//留言板
+
+func apiAddComment(w http.ResponseWriter, r *http.Request) {
+	param := struct {
+		Name    string `json:"name"`
+		Content string `json:"content"`
+	}{}
+	getJsonFromBody(r, &param)
+
+	privacy := services.GetPrivacy(r)
+	services.AddComment(privacy, param.Name, param.Content)
+}
+func apiSupportComment(w http.ResponseWriter, r *http.Request) {
+	param := struct {
+		Id string `json:"id"`
+	}{}
+	getJsonFromBody(r, &param)
+
+}
+func apiOpposeComment(w http.ResponseWriter, r *http.Request) {
+
+}
 
 func test(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
+
 	//parm := struct {
 	//	Key string `json:"key"`
 	//}{}
 
-	value := r.Form.Get("username")
 	//getJsonFromBody(r, &parm)
 
 	//关闭xss保护，可以执行脚本
 	//w.Header().Set("X-XSS-Protection", "0")
 
-	fmt.Fprintln(w, value)
+}
+
+func PrintHeader(header http.Header) {
+	for k, vs := range header {
+		fmt.Printf("%s: ", k)
+		for _, v := range vs {
+			fmt.Printf("%s ", v)
+		}
+		fmt.Println()
+	}
 }
 
 //获取body中的json
@@ -38,16 +73,22 @@ func test(w http.ResponseWriter, r *http.Request) {
 func getJsonFromBody(r *http.Request, result interface{}) {
 	body := r.Body
 	defer body.Close()
+	//
+	//buffer := make([]byte, 1024)
+	//buffers := make([]byte, 0, 1024)
+	//n, _ := body.Read(buffer)
+	//for n > 0 {
+	//	//str := (*string)(unsafe.Pointer(&buffer))
+	//	buffers = append(buffers, buffer[:n]...)
+	//	n, _ = body.Read(buffer)
+	//}
 
-	buffer := make([]byte, 1024)
-	buffers := make([]byte, 0, 1024)
-	n, _ := body.Read(buffer)
-	for n > 0 {
-		//str := (*string)(unsafe.Pointer(&buffer))
-		buffers = append(buffers, buffer[:n]...)
-		n, _ = body.Read(buffer)
+	buffers, err := ioutil.ReadAll(body)
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
-	err := json.Unmarshal(buffers, result)
+	err = json.Unmarshal(buffers, result)
 	if err != nil {
 		fmt.Println(err)
 		return
